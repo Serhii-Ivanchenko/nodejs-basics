@@ -1,6 +1,8 @@
 import { getAllStudents, getStudentById } from '../services/students.js';
 
-export const getStudentsController = async (req, res) => {
+import createHttpError from 'http-errors';
+
+export const getStudentsController = async (req, res, next) => {
   const students = await getAllStudents();
 
   res.status(200).json({
@@ -15,8 +17,7 @@ export const getStudentByIdController = async (req, res, next) => {
   const student = await getStudentById(studentId);
 
   if (!student) {
-    next(new Error('Student not found!'));
-    return;
+    throw createHttpError(404, 'Student not found!');
   }
   res.status(200).json({
     status: 200,
