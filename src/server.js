@@ -29,7 +29,7 @@ export const startServer = () => {
     });
   });
 
-  app.use(studentsRouter)
+  app.use(studentsRouter);
 
   app.use('*', notFoundHandler);
 
