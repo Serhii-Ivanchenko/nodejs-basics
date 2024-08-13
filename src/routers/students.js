@@ -15,16 +15,15 @@ import {
   updateStudentSchema,
 } from '../validation/students.js';
 import { isValidId } from '../middlewares/isValidId.js';
+import { authenticate } from '../middlewares/authenticate.js';
 
 const router = Router();
 
+router.use(authenticate);
+~
 router.get('/', ctrlWrapper(getStudentsController));
 
-router.get(
-  '/:studentId',
-  isValidId,
-  ctrlWrapper(getStudentByIdController),
-);
+router.get('/:studentId', isValidId, ctrlWrapper(getStudentByIdController));
 
 router.post(
   '/register',
@@ -32,11 +31,7 @@ router.post(
   ctrlWrapper(createStudentController),
 );
 
-router.delete(
-  '/:studentId',
-  isValidId,
-  ctrlWrapper(deleteStudentController),
-);
+router.delete('/:studentId', isValidId, ctrlWrapper(deleteStudentController));
 
 router.put(
   '/:studentId',
