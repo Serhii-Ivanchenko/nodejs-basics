@@ -99,13 +99,13 @@ export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
 };
 
 export const requestResetToken = async (email) => {
-  const user = UserCollection.findOne({ email });
+  const user = await UserCollection.findOne({ email });
 
   if (!user) {
     throw createHttpError(404, 'User not found');
   }
 
-  const resetToken = jwt.sign({ sub: user._id, email }, env('JWT_SECRET'), {
+  const resetToken = jwt.sign({ sub: user._id, email }, env(SMTP.JWT_SECRET), {
     expiresIn: '15m',
   });
 
@@ -114,23 +114,27 @@ export const requestResetToken = async (email) => {
     'reset-password-email.html',
   );
 
-  const templateSource = await fs
-    .readFile(resetPasswordTemplatePath)
-    .toString();
+  const templateSource = (
+    await fs.readFile(resetPasswordTemplatePath)
+  ).toString();
 
   const template = handlebars.compile(templateSource);
 
   const html = template({
     name: user.name,
-    link: `${env('APP_DOMAIN')}/reset-password?token=${resetToken}`,
+    link: `${env(SMTP.APP_DOMAIN)}/reset-password?token=${resetToken}`,
   });
 
-  await sendEmail({
-    from: env(SMTP.SMTP_FROM),
-    to: email,
-    subject: 'Reset your password',
-    html,
-  });
+  try {
+    await sendEmail({
+      from: env(SMTP.SMTP_FROM),
+      to: email,
+      subject: 'Reset your password',
+      html,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 export const resetPassword = async (payload) => {
