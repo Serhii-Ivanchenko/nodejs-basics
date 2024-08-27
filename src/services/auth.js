@@ -20,6 +20,18 @@ import {
   validateCode,
 } from '../utils/googleOAuth2.js';
 
+const createSession = () => {
+  const accessToken = randomBytes(30).toString('base64');
+  const refreshToken = randomBytes(30).toString('base64');
+
+  return {
+    accessToken,
+    refreshToken,
+    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
+    refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
+  };
+};
+
 export const registerUser = async (payload) => {
   const user = await UserCollection.findOne({ email: payload.email });
   if (user) {
@@ -47,32 +59,16 @@ export const loginUser = async (payload) => {
 
   await SessionsCollection.deleteOne({ userId: user._id });
 
-  const accessToken = randomBytes(30).toString('base64');
-  const refreshToken = randomBytes(30).toString('base64');
+  const newSession = createSession();
 
   return await SessionsCollection.create({
     userId: user._id,
-    accessToken,
-    refreshToken,
-    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
-    refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
+    ...newSession,
   });
 };
 
 export const logoutUser = async (sessionId) => {
   await SessionsCollection.deleteOne({ _id: sessionId });
-};
-
-const createSession = () => {
-  const accessToken = randomBytes(30).toString('base64');
-  const refreshToken = randomBytes(30).toString('base64');
-
-  return {
-    accessToken,
-    refreshToken,
-    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
-    refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
-  };
 };
 
 export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
@@ -194,18 +190,8 @@ export const loginOrSignupWithGoogle = async (code) => {
     throw createHttpError(500, 'Session creation failed');
   }
 
-  // return await SessionsCollection.create({
-  //   userId: user._id,
-  //   ...newSession,
-  // });
-  const createdSession = await SessionsCollection.create({
+  return await SessionsCollection.create({
     userId: user._id,
     ...newSession,
   });
-
-  if (!createdSession) {
-    throw createHttpError(500, 'Session storage failed');
-  }
-
-  return createdSession;
 };
