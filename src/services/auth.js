@@ -186,9 +186,7 @@ export const loginOrSignupWithGoogle = async (code) => {
 
   const newSession = createSession();
 
-  if (!newSession) {
-    throw createHttpError(500, 'Session creation failed');
-  }
+  await SessionsCollection.deleteOne({ userId: user._id });
 
   return await SessionsCollection.create({
     userId: user._id,
